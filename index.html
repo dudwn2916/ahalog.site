@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AHALOGUE — 나만의 프리즘으로 보는 시선</title>
-  <link rel="icon" href="mark_logo.png" type="image/png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -173,6 +172,96 @@
     .email-row button:hover { opacity: 0.8; }
     .beta-note { font-size: 12px; color: #bbb; margin-top: 0.875rem; }
 
+    /* ── auth (Supabase) ── */
+    .auth-area { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .auth-btn {
+      font-size: 13px; font-weight: 600; padding: 7px 16px;
+      border: 1px solid #222; border-radius: 8px; cursor: pointer;
+      background: transparent; color: #111;
+      transition: background 0.15s, color 0.15s;
+    }
+    .auth-btn:hover { background: #111; color: #fff; }
+    .auth-btn-ghost {
+      font-size: 13px; color: #444; background: transparent; border: none;
+      cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+    }
+    .auth-btn-ghost:hover { color: #111; }
+    .auth-user-label { font-size: 12px; color: #666; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .auth-status-banner {
+      background: linear-gradient(180deg, #f8f8fa 0%, #f3f4f6 100%);
+      border-bottom: 0.5px solid #e4e4e4;
+      padding: 0.65rem 2.5rem;
+      font-size: 14px;
+      color: #444;
+      text-align: center;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+    .auth-status-banner strong { color: #0a0a0a; font-weight: 600; }
+    .auth-modal {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.25rem; visibility: hidden; opacity: 0;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .auth-modal.is-open { visibility: visible; opacity: 1; }
+    .auth-modal-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+      cursor: pointer;
+    }
+    .auth-modal-card {
+      position: relative; width: 100%; max-width: 400px;
+      background: #fff; border-radius: 16px; padding: 1.75rem 1.75rem 1.5rem;
+      border: 0.5px solid #e4e4e4; box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    }
+    .auth-modal-close {
+      position: absolute; top: 14px; right: 14px;
+      border: none; background: transparent; font-size: 22px;
+      line-height: 1; cursor: pointer; color: #999; padding: 4px;
+    }
+    .auth-modal-close:hover { color: #111; }
+    .auth-modal-card h3 { font-size: 18px; font-weight: 700; color: #0a0a0a; margin-bottom: 0.5rem; }
+    .auth-modal-desc { font-size: 13px; color: #666; margin-bottom: 1.25rem; line-height: 1.5; }
+    .auth-field { margin-bottom: 1rem; }
+    .auth-field label { display: block; font-size: 12px; font-weight: 600; color: #444; margin-bottom: 6px; }
+    .auth-field input {
+      width: 100%; font-size: 14px; padding: 11px 14px;
+      border: 1px solid #ccc; border-radius: 8px; color: #111; outline: none;
+    }
+    .auth-field input:focus { border-color: #888; }
+    .auth-message { font-size: 13px; min-height: 1.25em; margin-bottom: 1rem; }
+    .auth-message.ok { color: #1a7a58; }
+    .auth-message.err { color: #b00020; }
+    .auth-modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .auth-modal-actions button {
+      flex: 1; min-width: 120px; font-size: 14px; font-weight: 600;
+      padding: 11px 16px; border-radius: 8px; cursor: pointer; border: none;
+    }
+    #auth-submit-login { background: #0a0a0a; color: #fff; }
+    #auth-submit-login:hover { opacity: 0.88; }
+    #auth-submit-signup {
+      background: #fff; color: #111; border: 1px solid #ccc;
+    }
+    #auth-submit-signup:hover { border-color: #888; }
+
+    .auth-oauth { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 0.5px solid #eaeaea; }
+    .auth-oauth-label {
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #999; text-align: center; margin-bottom: 0.875rem;
+    }
+    .auth-oauth-btns { display: flex; flex-direction: column; gap: 8px; }
+    .oauth-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; font-size: 14px; font-weight: 600;
+      padding: 11px 16px; border-radius: 8px; cursor: pointer;
+      border: 1px solid transparent; transition: opacity 0.15s;
+    }
+    .oauth-btn:hover { opacity: 0.92; }
+    .oauth-google { background: #fff; color: #444; border-color: #dadce0; }
+    .oauth-kakao { background: #fee500; color: #191919; border-color: #e6cf00; }
+    .oauth-naver { background: #03c75a; color: #fff; border-color: #02a850; }
+
     /* ── footer ── */
     .footer {
       display: flex; justify-content: space-between; align-items: center;
@@ -188,6 +277,7 @@
     @media (max-width: 600px) {
       .nav { padding: 1rem 1.25rem; }
       .nav-right .nav-link { display: none; }
+      .auth-status-banner { padding-left: 1.25rem; padding-right: 1.25rem; font-size: 13px; }
       .hero { padding: 4rem 1.25rem 3.5rem; }
       .hero h1 { font-size: 30px; }
       .section { padding: 3rem 1.25rem; }
@@ -210,9 +300,12 @@
     <div class="nav-right">
       <a class="nav-link" href="#why">서비스 소개</a>
       <a class="nav-link" href="#features">기능</a>
+      <div id="auth-area" class="auth-area" aria-live="polite"></div>
       <button class="nav-cta" onclick="document.querySelector('.beta').scrollIntoView({behavior:'smooth'})">베타 신청</button>
     </div>
   </nav>
+
+  <div id="auth-status-banner" class="auth-status-banner" hidden></div>
 
   <section class="hero">
     <div class="hero-badge"><span class="badge-dot"></span>Beta — 은행권 집중</div>
@@ -337,6 +430,211 @@
     </a>
     <span class="footer-copy">© 2026 AHALOGUE. Beta v0.1</span>
   </footer>
+
+  <!-- Supabase 로그인 모달 -->
+  <div id="auth-modal" class="auth-modal" aria-hidden="true">
+    <div class="auth-modal-backdrop" id="auth-modal-backdrop"></div>
+    <div class="auth-modal-card" role="dialog" aria-labelledby="auth-modal-title">
+      <button type="button" class="auth-modal-close" id="auth-modal-close" aria-label="닫기">×</button>
+      <h3 id="auth-modal-title">로그인</h3>
+      <p class="auth-modal-desc">이메일·비밀번호로 로그인하거나, 아래 Google·카카오·네이버로 계속할 수 있습니다. 소셜 로그인은 Supabase 대시보드(Auth → Providers)에서 각 제공자를 켠 뒤에 동작합니다.</p>
+      <div class="auth-field">
+        <label for="auth-email">이메일</label>
+        <input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com" />
+      </div>
+      <div class="auth-field">
+        <label for="auth-password">비밀번호</label>
+        <input type="password" id="auth-password" autocomplete="current-password" placeholder="비밀번호" />
+      </div>
+      <p id="auth-message" class="auth-message" role="status"></p>
+      <div class="auth-modal-actions">
+        <button type="button" id="auth-submit-login">로그인</button>
+        <button type="button" id="auth-submit-signup">회원가입</button>
+      </div>
+      <div class="auth-oauth">
+        <p class="auth-oauth-label">또는 소셜 계정으로</p>
+        <div class="auth-oauth-btns">
+          <button type="button" class="oauth-btn oauth-google" id="oauth-google">Google로 계속하기</button>
+          <button type="button" class="oauth-btn oauth-kakao" id="oauth-kakao">카카오로 계속하기</button>
+          <button type="button" class="oauth-btn oauth-naver" id="oauth-naver">네이버로 계속하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+
+    const SUPABASE_URL = 'https://hdwguntrpwcgvewucuwj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhkd2d1bnRycHdjZ3Zld3VjdXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MDE1NzAsImV4cCI6MjA5MzI3NzU3MH0.J6JDs7r67prpSwoxZw-Fd74F60NnMRlaBNdNeHZQF6w';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /** 네이버는 내장 제공자가 아니라 Custom OAuth로 붙입니다. Dashboard에 만든 식별자와 똑같이 두세요 (예: custom:naver). */
+    const OAUTH_NAVER_PROVIDER = 'custom:naver';
+
+    const authArea = document.getElementById('auth-area');
+    const modal = document.getElementById('auth-modal');
+    const backdrop = document.getElementById('auth-modal-backdrop');
+    const btnClose = document.getElementById('auth-modal-close');
+    const elEmail = document.getElementById('auth-email');
+    const elPassword = document.getElementById('auth-password');
+    const elMsg = document.getElementById('auth-message');
+    const btnLogin = document.getElementById('auth-submit-login');
+    const btnSignup = document.getElementById('auth-submit-signup');
+    const authBanner = document.getElementById('auth-status-banner');
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /** 이메일·소셜 메타데이터에서 화면에 쓸 주소 선택 (카카오 동의 없으면 안 올 수 있음) */
+    function getDisplayEmail(user) {
+      if (!user) return '';
+      if (user.email) return user.email;
+      const meta = user.user_metadata || {};
+      if (meta.email) return meta.email;
+      const idEmail = user.identities?.find((i) => i?.identity_data?.email)?.identity_data?.email;
+      if (idEmail) return idEmail;
+      return '(연결된 이메일이 없습니다. 카카오는 개발자 콘솔에서 이메일 동의 항목을 켜 주세요.)';
+    }
+
+    function updateAuthBanner(user) {
+      if (!user) {
+        authBanner.hidden = true;
+        authBanner.innerHTML = '';
+        return;
+      }
+      authBanner.hidden = false;
+      const email = getDisplayEmail(user);
+      authBanner.innerHTML = `로그인한 이메일: <strong>${escapeHtml(email)}</strong>`;
+    }
+
+    function openModal() {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      elMsg.textContent = '';
+      elMsg.className = 'auth-message';
+      elEmail.focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function setMessage(text, type) {
+      elMsg.textContent = text || '';
+      elMsg.className = 'auth-message' + (type === 'ok' ? ' ok' : type === 'err' ? ' err' : '');
+    }
+
+    function renderAuth(user) {
+      updateAuthBanner(user);
+      authArea.innerHTML = '';
+      if (user) {
+        const out = document.createElement('button');
+        out.type = 'button';
+        out.className = 'auth-btn-ghost';
+        out.textContent = '로그아웃';
+        out.addEventListener('click', async () => {
+          await supabase.auth.signOut();
+        });
+        authArea.append(out);
+      } else {
+        const login = document.createElement('button');
+        login.type = 'button';
+        login.className = 'auth-btn';
+        login.textContent = '로그인';
+        login.addEventListener('click', openModal);
+        authArea.append(login);
+      }
+    }
+
+    async function signInWithOAuthProvider(provider) {
+      const redirectTo =
+        window.location.protocol === 'http:' || window.location.protocol === 'https:'
+          ? `${window.location.origin}${window.location.pathname}`
+          : undefined;
+
+      const options = {};
+      if (redirectTo) options.redirectTo = redirectTo;
+
+      if (provider === 'google') {
+        options.queryParams = { access_type: 'offline', prompt: 'select_account' };
+      }
+      if (provider === 'kakao') {
+        options.scopes = 'account_email';
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({ provider, options });
+      if (error) setMessage(error.message, 'err');
+    }
+
+    document.getElementById('oauth-google').addEventListener('click', () => signInWithOAuthProvider('google'));
+    document.getElementById('oauth-kakao').addEventListener('click', () => signInWithOAuthProvider('kakao'));
+    document.getElementById('oauth-naver').addEventListener('click', () => signInWithOAuthProvider(OAUTH_NAVER_PROVIDER));
+
+    backdrop.addEventListener('click', closeModal);
+    btnClose.addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+    });
+
+    btnLogin.addEventListener('click', async () => {
+      const email = elEmail.value.trim();
+      const password = elPassword.value;
+      if (!email || !password) {
+        setMessage('이메일과 비밀번호를 입력해 주세요.', 'err');
+        return;
+      }
+      setMessage('처리 중…', '');
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setMessage(error.message, 'err');
+        return;
+      }
+      setMessage('로그인되었습니다.', 'ok');
+      closeModal();
+      renderAuth(data.user);
+    });
+
+    btnSignup.addEventListener('click', async () => {
+      const email = elEmail.value.trim();
+      const password = elPassword.value;
+      if (!email || !password) {
+        setMessage('이메일과 비밀번호를 입력해 주세요.', 'err');
+        return;
+      }
+      if (password.length < 6) {
+        setMessage('비밀번호는 6자 이상으로 설정해 주세요.', 'err');
+        return;
+      }
+      setMessage('처리 중…', '');
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setMessage(error.message, 'err');
+        return;
+      }
+      if (data.user && data.session) {
+        setMessage('가입 및 로그인 완료.', 'ok');
+        closeModal();
+        renderAuth(data.user);
+      } else {
+        setMessage('가입 확인 메일을 발송했을 수 있습니다. 메일함을 확인한 뒤 다시 로그인해 주세요. (설정에서 이메일 인증을 끈 경우 곧바로 로그인됩니다.)', 'ok');
+      }
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      renderAuth(session?.user ?? null);
+    });
+
+    const { data: { session } } = await supabase.auth.getSession();
+    renderAuth(session?.user ?? null);
+  </script>
 
 </body>
 </html>
