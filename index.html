@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AHALOGUE — 나만의 프리즘으로 보는 시선</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+      background: #fff;
+      color: #111;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── nav ── */
+    .nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.25rem 2.5rem;
+      border-bottom: 0.5px solid #e4e4e4;
+      position: sticky; top: 0; background: #fff; z-index: 100;
+    }
+    .logo-mark { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    
+    /* 로고 이미지 수정 (mark_logo.png) */
+    .logo-img { width: 20px; height: auto; } 
+
+    .logo-text { font-size: 14px; font-weight: 600; letter-spacing: 0.1em; color: #111; }
+    /* AHALOGUE.IN > AHALOGUE 수정 */
+    .logo-text span { color: #999; font-weight: 400; display: none; } 
+
+    .nav-right { display: flex; align-items: center; gap: 1.75rem; }
+    .nav-link { font-size: 13px; color: #444; text-decoration: none; }
+    .nav-link:hover { color: #111; }
+    .nav-cta {
+      font-size: 13px; font-weight: 600; padding: 7px 18px;
+      border: 1px solid #222; border-radius: 8px;
+      cursor: pointer; color: #111; background: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-cta:hover { background: #111; color: #fff; }
+
+    /* ── hero ── */
+    .hero {
+      padding: 7rem 2.5rem 5.5rem;
+      max-width: 700px; margin: 0 auto; text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #666; border: 0.5px solid #ddd;
+      border-radius: 100px; padding: 5px 16px; margin-bottom: 2.5rem;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: linear-gradient(135deg, #c8b8f8, #98ccf4);
+      flex-shrink: 0;
+    }
+    .hero h1 {
+      font-size: 44px; font-weight: 700; line-height: 1.2;
+      letter-spacing: -0.03em; margin-bottom: 1.375rem; color: #0a0a0a;
+    }
+    .hero h1 .muted { color: #aaa; font-weight: 400; }
+    
+    /* 프리즘 단어 색상 수정 */
+    .prism-text {
+      background: linear-gradient(135deg, #b8a8f4, #98ccf4, #f4a8d8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub { font-size: 15px; line-height: 1.8; color: #555; max-width: 460px; margin: 0 auto 0.75rem; }
+    .hero-sub-em {
+      display: block; font-size: 15px; font-weight: 600; margin-bottom: 2.75rem;
+      background: linear-gradient(90deg, #9b8de8, #74b8e8, #e888c8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      font-size: 14px; font-weight: 600; padding: 12px 30px;
+      background: #0a0a0a; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.8; }
+    .btn-ghost {
+      font-size: 14px; font-weight: 500; padding: 12px 24px;
+      background: transparent; color: #333;
+      border: 1px solid #ccc; border-radius: 8px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-ghost:hover { border-color: #888; color: #111; }
+
+    /* ── dividers ── */
+    .divider { border: none; border-top: 0.5px solid #efefef; margin: 0 2.5rem; }
+
+    /* ── why section ── */
+    .section { padding: 4.5rem 2.5rem; max-width: 700px; margin: 0 auto; }
+    .sec-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #999; margin-bottom: 0.75rem; }
+    .section h2 { font-size: 26px; font-weight: 700; line-height: 1.3; color: #0a0a0a; margin-bottom: 1rem; }
+    .section .desc { font-size: 15px; line-height: 1.8; color: #555; margin-bottom: 2.75rem; }
+
+    .steps { display: flex; flex-direction: column; }
+    .step { display: flex; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 0.5px solid #f2f2f2; }
+    .step:last-child { border-bottom: none; }
+    .step-n { font-size: 11px; color: #bbb; min-width: 20px; padding-top: 3px; flex-shrink: 0; }
+    .step h3 { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 5px; }
+    .step p { font-size: 13px; line-height: 1.7; color: #666; }
+
+    /* ── prism ── */
+    .prism-wrap { padding: 0 2.5rem 4.5rem; max-width: 700px; margin: 0 auto; }
+    .prism-card {
+      border: 1px solid #ebe6fa;
+      border-radius: 16px; padding: 2.25rem 2.5rem;
+      background: linear-gradient(145deg, #fdfcff 0%, #f8f5ff 100%);
+    }
+    .prism-head { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; }
+    .prism-icon {
+      font-size: 16px;
+      background: linear-gradient(135deg, #b8a8f4, #98ccf4, #f4a8d8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .prism-meta { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #999; }
+    .prism-card h2 { font-size: 22px; font-weight: 700; color: #0a0a0a; margin-bottom: 0.75rem; }
+    .prism-card > p { font-size: 14px; line-height: 1.75; color: #555; margin-bottom: 1.5rem; }
+    .prism-eg {
+      background: #fff; border-radius: 12px; padding: 1.25rem 1.5rem;
+      border: 0.5px solid #e4dcf8;
+    }
+    .eg-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-bottom: 8px; }
+    .eg-event { font-size: 14px; font-weight: 600; color: #0a0a0a; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 0.5px solid #ede8fa; }
+    .eg-row { display: flex; gap: 12px; align-items: flex-start; margin-top: 10px; }
+    .eg-role { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #aaa; min-width: 54px; padding-top: 3px; flex-shrink: 0; }
+    .eg-text { font-size: 13px; line-height: 1.65; color: #444; }
+    .eg-text b { font-weight: 600; color: #111; }
+
+    /* ── features ── */
+    .feat-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: #e8e8e8;
+      border-radius: 16px; overflow: hidden; border: 1px solid #e8e8e8;
+    }
+    .feat-cell { background: #fff; padding: 1.75rem; }
+    .feat-tag {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 100px; margin-bottom: 12px;
+    }
+    .tag-i { background: #eeebff; color: #5040b0; }
+    .tag-s { background: #e6f8f2; color: #1a7a58; }
+    .feat-cell h3 { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 6px; }
+    .feat-cell p { font-size: 13px; line-height: 1.65; color: #666; }
+
+    /* ── beta ── */
+    .beta { padding: 6rem 2.5rem; max-width: 520px; margin: 0 auto; text-align: center; }
+    .beta h2 { font-size: 26px; font-weight: 700; color: #0a0a0a; margin-bottom: 0.875rem; }
+    .beta p { font-size: 15px; color: #555; line-height: 1.8; margin-bottom: 2.25rem; }
+    .email-row { display: flex; gap: 8px; }
+    .email-row input {
+      flex: 1; font-size: 14px; padding: 12px 16px;
+      border: 1px solid #ccc; border-radius: 8px;
+      color: #111; outline: none; background: #fff;
+      transition: border-color 0.15s;
+    }
+    .email-row input:focus { border-color: #999; }
+    .email-row button {
+      font-size: 14px; font-weight: 600; padding: 12px 22px;
+      background: #0a0a0a; color: #fff; border: none; border-radius: 8px;
+      cursor: pointer; white-space: nowrap; transition: opacity 0.15s;
+    }
+    .email-row button:hover { opacity: 0.8; }
+    .beta-note { font-size: 12px; color: #bbb; margin-top: 0.875rem; }
+
+    /* ── footer ── */
+    .footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 2rem 2.5rem; border-top: 0.5px solid #efefef;
+    }
+    .flogo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    /* 푸터 로고 이미지 mark_logo.png 로 수정 */
+    .flogo-img { width: 16px; height: auto; }
+    .flogo-name { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #111; }
+    .footer-copy { font-size: 11px; color: #bbb; }
+
+    /* ── responsive ── */
+    @media (max-width: 600px) {
+      .nav { padding: 1rem 1.25rem; }
+      .nav-right .nav-link { display: none; }
+      .hero { padding: 4rem 1.25rem 3.5rem; }
+      .hero h1 { font-size: 30px; }
+      .section { padding: 3rem 1.25rem; }
+      .prism-wrap { padding: 0 1.25rem 3rem; }
+      .prism-card { padding: 1.5rem; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .beta { padding: 4rem 1.25rem; }
+      .email-row { flex-direction: column; }
+      .footer { padding: 1.5rem 1.25rem; flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a class="logo-mark" href="#">
+      <img src="mark_logo.png" alt="AHALOGUE" class="logo-img">
+      <span class="logo-text">AHALOGUE</span>
+    </a>
+    <div class="nav-right">
+      <a class="nav-link" href="#why">서비스 소개</a>
+      <a class="nav-link" href="#features">기능</a>
+      <button class="nav-cta" onclick="document.querySelector('.beta').scrollIntoView({behavior:'smooth'})">베타 신청</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-badge"><span class="badge-dot"></span>Beta — 은행권 집중</div>
+    <h1>나만의 <span class="prism-text">프리즘</span>으로 보는 시선<br><span class="muted">나만의 언어로 쌓는 기록</span></h1>
+    <p class="hero-sub">생각이 자산이 되는 순간이 있습니다.<br>매일의 인사이트가 쌓여 자소서가 되고, 면접이 됩니다.</p>
+    <span class="hero-sub-em"><span class="prism-text">프리즘</span>으로 해석하고, 아하로그로 기록하세요.</span>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="document.querySelector('.beta').scrollIntoView({behavior:'smooth'})">베타 신청하기</button>
+      <button class="btn-ghost" onclick="document.getElementById('why').scrollIntoView({behavior:'smooth'})">서비스 살펴보기</button>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="section" id="why">
+    <div class="sec-label">왜 AHALOGUE인가</div>
+    <h2>정보가 넘치는 시대,<br>부족한 건 인사이트입니다</h2>
+    <p class="desc">AI가 대체하지 못하는 것은 깊은 사고력과 자기만의 관점입니다. 은행·금융 이슈를 매일 접하고, 직무 시각으로 재해석하는 훈련이 쌓이면 자소서와 면접은 자연스럽게 따라옵니다.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div>
+          <h3>매일 3분, 산업 인사이트 흡수</h3>
+          <p>큐레이션된 금융 뉴스와 짧은 영상으로 오늘의 이슈를 확인합니다. 단순 정보가 아닌 흐름을 읽습니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div>
+          <h3><span class="prism-text">프리즘</span>으로 직무 관점 기록</h3>
+          <p>같은 뉴스도 직무에 따라 다르게 해석됩니다. 내 직무의 시각으로 재해석한 한 문장이 <span class="prism-text">프리즘</span>입니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div>
+          <h3>AI 파트너와 생각 확장</h3>
+          <p>AI가 대신 써주지 않습니다. 더 깊이 생각할 수 있도록 질문하고, 논리를 함께 다듬어 갑니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div>
+          <h3>나만의 스토리로 자소서 완성</h3>
+          <p>매일의 기록이 쌓이면 자소서 소재를 찾는 게 아니라 고르는 상황이 됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <div class="prism-wrap">
+    <div class="prism-card">
+      <div class="prism-head">
+        <span class="prism-icon">◈</span>
+        <span class="prism-meta"><span class="prism-text">프리즘</span>이란</span>
+      </div>
+      <h2>같은 뉴스, 다른 관점</h2>
+      <p>단순 요약이 아닙니다. 오늘 읽은 이슈를 내 직무의 언어로 재해석한 한 문장. 그게 쌓이면 면접장에서 꺼낼 수 있는 나만의 시각이 됩니다.</p>
+      <div class="prism-eg">
+        <div class="eg-label">오늘의 이슈</div>
+        <div class="eg-event">금리 인상에 따른 머니무브 가속화</div>
+        <div class="eg-row">
+          <div class="eg-role">영업직무</div>
+          <div class="eg-text"><b>"고객이 이동하는 시점이 새로운 관계의 시작이다.</b> 상품 확신 없이는 세일즈도 없다."</div>
+        </div>
+        <div class="eg-row">
+          <div class="eg-role">리스크직무</div>
+          <div class="eg-text"><b>"자금 이탈 속도가 곧 리스크 신호다.</b> 선제적 모니터링 기준을 어떻게 설계할까."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <section class="section" id="features">
+    <div class="sec-label">핵심 기능</div>
+    <h2>두 축이 하나로 연결됩니다</h2>
+    <p class="desc">산업을 이해하는 인사이트 훈련과, 나를 이해하는 자기기록. 이 두 가지가 함께 쌓일 때 면접에서 흔들리지 않습니다.</p>
+    <div class="feat-grid">
+      <div class="feat-cell">
+        <div class="feat-tag tag-i">산업 인사이트</div>
+        <h3>매일 아침 영상 + <span class="prism-text">프리즘</span></h3>
+        <p>3~5분 영상으로 이슈를 파악하고, 직무 관점 한 문장을 기록합니다.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-tag tag-i">산업 인사이트</div>
+        <h3>기사 큐레이션 & 오피니언</h3>
+        <p>상반된 시각의 기사를 읽고, 나만의 견해를 씁니다. AI가 논리를 다듬어 줍니다.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-tag tag-s">자기이해</div>
+        <h3>AI 매일 질문</h3>
+        <p>가치관, 강점, 경험을 탐색하는 질문이 매일 저녁 도착합니다.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-tag tag-s">자기이해</div>
+        <h3>스토리 아카이브</h3>
+        <p>쌓인 기록을 자소서 문항과 연결하는 소재 지도를 만들어 드립니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="beta">
+    <h2>베타 서비스 신청</h2>
+    <p>은행권 취업을 준비하고 있다면, 지금 신청하세요.<br>베타 참여자에게 가장 먼저 안내드립니다.</p>
+    <div class="email-row">
+      <input type="email" placeholder="이메일 주소를 입력하세요" />
+      <button>신청하기</button>
+    </div>
+    <p class="beta-note">베타는 무료입니다. 스팸 없음.</p>
+  </section>
+
+  <footer class="footer">
+    <a class="flogo" href="#">
+      <img src="mark_logo.png" alt="AHALOGUE" class="flogo-img">
+      <span class="flogo-name">AHALOGUE</span>
+    </a>
+    <span class="footer-copy">© 2026 AHALOGUE. Beta v0.1</span>
+  </footer>
+
+</body>
+</html>
