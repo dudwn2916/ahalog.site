@@ -566,9 +566,6 @@
       if (provider === 'google') {
         options.queryParams = { access_type: 'offline', prompt: 'select_account' };
       }
-      if (provider === 'kakao') {
-        options.scopes = 'account_email';
-      }
 
       const { error } = await supabase.auth.signInWithOAuth({ provider, options });
       if (error) setMessage(error.message, 'err');
