@@ -554,22 +554,29 @@
       }
     }
 
-    async function signInWithOAuthProvider(provider) {
-      const redirectTo =
-        window.location.protocol === 'http:' || window.location.protocol === 'https:'
-          ? `${window.location.origin}${window.location.pathname}`
-          : undefined;
+async function signInWithOAuthProvider(provider) {
+  const redirectTo =
+    window.location.protocol === 'http:' || window.location.protocol === 'https:'
+      ? `${window.location.origin}${window.location.pathname}`
+      : undefined;
 
-      const options = {};
-      if (redirectTo) options.redirectTo = redirectTo;
+  const options = {};
+  if (redirectTo) options.redirectTo = redirectTo;
 
-      if (provider === 'google') {
-        options.queryParams = { access_type: 'offline', prompt: 'select_account' };
-      }
+  // 1. 구글 설정 (기존 유지)
+  if (provider === 'google') {
+    options.queryParams = { access_type: 'offline', prompt: 'select_account' };
+  }
 
-      const { error } = await supabase.auth.signInWithOAuth({ provider, options });
-      if (error) setMessage(error.message, 'err');
-    }
+  // 2. 카카오 & 네이버 설정 (이메일 요청 제외)
+  // 카카오나 네이버일 경우 queryParams를 비워두어 이메일 권한 에러를 방지합니다.
+  if (provider === 'kakao' || provider === OAUTH_NAVER_PROVIDER || provider === 'naver') {
+    options.queryParams = {}; 
+  }
+
+  const { error } = await supabase.auth.signInWithOAuth({ provider, options });
+  if (error) setMessage(error.message, 'err');
+}
 
     document.getElementById('oauth-google').addEventListener('click', () => signInWithOAuthProvider('google'));
     document.getElementById('oauth-kakao').addEventListener('click', () => signInWithOAuthProvider('kakao'));
