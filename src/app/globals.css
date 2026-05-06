@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --font: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
+  --blue: #0066ff;
+  --blue-sub: #e0eaff;
+  --blue-dark: #005ee8;
+  --ink: #17171a;
+  --fg2: #3b3b41;
+  --fg3: #706f78;
+  --fg4: #97989f;
+  --border: rgba(112, 115, 124, 0.22);
+  --surface: #f7f7f8;
+  --bg: #ebebef;
+  --prism: linear-gradient(90deg, #9b8de8, #74b8e8, #e888c8);
+  --prism-bg: linear-gradient(135deg, #c8b8f8, #98ccf4, #f4a8d8);
+  --success: #00bf40;
+  --danger: #ff4242;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.prism-text {
+  background: var(--prism);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
