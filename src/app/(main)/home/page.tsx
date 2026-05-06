@@ -191,12 +191,17 @@ export default function HomePage() {
         </nav>
       </aside>
 
-      {/* ── 메인 ── */}
+      {/* ── 메인 ── (남은 폭 전체 사용 후 내부 900px만 중앙 정렬) ── */}
       <main style={{
-  marginLeft: 240, flex: 1, padding: '32px 24px 32px 24px', // 하단 padding 줄임 (80px → 32px)
-  maxWidth: 'calc(240px + 900px)', boxSizing: 'border-box',
-}} className="main-content">
-        <div style={{ maxWidth: 900 }}>
+        marginLeft: 240,
+        flex: 1,
+        minWidth: 0,
+        boxSizing: 'border-box',
+        padding: '32px 24px',
+        display: 'flex',
+        justifyContent: 'center',
+      }} className="main-content">
+        <div style={{ width: '100%', maxWidth: 900 }}>
 
           {/* 날짜 + 제목 */}
           <div style={{ marginBottom: 24 }}>
