@@ -33,7 +33,7 @@ interface Content {
   keywords?: string[]      // ← Supabase 컬럼명
   category?: string
   source?: string
-  date: string
+  date: string | undefined
   published_at?: string    // ← Supabase 컬럼명
   hasPrism: boolean
   excerpt: string
@@ -242,7 +242,7 @@ useEffect(() => {
         title: c.title,
         tags: c.keywords ?? [],
         source: c.source,
-        date: c.published_at,
+        date: c.published_at ?? '',
         hasPrism: prismSet.has(c.id), // 내가 이 콘텐츠로 프리즘 작성했는지
         excerpt: c.body ?? '',
       }))
