@@ -313,12 +313,12 @@ useEffect(() => {
       job_tags: string[]
       company_tags: string[]
       created_at: string
-      contents: { id: string; title: string; keywords: string[] } | null
+      contents: { id: string; title: string; keywords: string[] }[] | null
     }) => ({
       id: p.id,
       type: p.type === 'opinion' ? 'opinion' : p.type === 'self' ? 'self' : 'card',
-      title: p.contents?.title ?? '제목 없음',
-      tags: p.contents?.keywords ?? [],
+      title: p.contents?.[0]?.title ?? '제목 없음',
+      tags: p.contents?.[0]?.keywords ?? [],
       category: p.type === 'self' ? (p.job_tags?.[0] ?? '') : undefined,
       job: p.job_tags?.[0],
       company: p.company_tags?.[0],
