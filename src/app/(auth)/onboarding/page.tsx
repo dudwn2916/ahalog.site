@@ -8,10 +8,24 @@ import type { CSSProperties, TouchEventHandler } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 
-const JOB_FIELDS = ['개발', '디자인', '기획', '마케팅', '데이터', '영업']
-const TARGET_COMPANIES = ['대기업', '중견기업', '스타트업', '외국계', '공기업']
-const INDUSTRIES = ['IT', '핀테크', '커머스', '게임', '헬스케어', '미디어']
-const TARGET_DATES = ['3개월 이내', '6개월 이내', '1년 이내', '1년 이후']
+const JOB_FIELDS = ['PB', '여신', '리스크', 'IT', '디지털']
+const TARGET_COMPANIES = ['KB국민은행', '신한은행', '하나은행', '우리은행', '기업은행', '농협']
+const INDUSTRIES = ['은행', '핀테크', '보험', '증권']
+
+// 연/월 선택용 — 현재 달부터 24개월
+const generateTargetMonths = () => {
+  const months: { label: string; value: string }[] = []
+  const now = new Date()
+  for (let i = 0; i < 24; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    months.push({
+      label: `${d.getFullYear()}년 ${d.getMonth() + 1}월`,
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`,
+    })
+  }
+  return months
+}
+const TARGET_MONTHS = generateTargetMonths()
 
 const pageStyle: CSSProperties = {
   minHeight: '100vh',
@@ -85,7 +99,7 @@ export default function OnboardingPage() {
   const canGoNext =
     step === 0 ||
     (step === 1 && nickname.trim().length > 0) ||
-    (step === 2 && !!jobField && !!targetCompany && !!industry) ||
+    (step === 2 && !!jobField && !!targetCompany) ||
     (step === 3 && !!targetDate) ||
     step === 4
 
@@ -111,17 +125,16 @@ export default function OnboardingPage() {
       } = await supabase.auth.getUser()
       if (userError || !user) throw new Error('로그인이 필요합니다.')
 
-      const { error } = await supabase.from('user_profile').upsert({
-        id: user.id,
-        nickname: nickname.trim(),
-        job_field: jobField,
-        target_company: targetCompany,
-        industry,
-        target_date: targetDate,
-      })
-      if (error) throw error
-
-      await supabase.auth.updateUser({ data: { notification_on: notificationOn } })
+        const { error } = await supabase.from('users').upsert({
+          id: user.id,
+          nickname: nickname.trim(),
+          job: jobField,
+          company: targetCompany,
+          industry,
+          target_date: targetDate,
+          notification_on: notificationOn,
+        })
+        if (error) throw error
       router.push('/home')
       router.refresh()
     } catch (error) {
@@ -215,7 +228,7 @@ export default function OnboardingPage() {
               <h2 style={{ ...titleStyle, fontSize: '20px', fontWeight: 700 }}>
                 목표 정보를 선택해 주세요
               </h2>
-              <p style={{ ...bodyStyle, marginTop: '10px' }}>직무, 기업, 산업을 각각 하나씩 선택해 주세요.</p>
+              <p style={{ ...bodyStyle, marginTop: '10px' }}>지망 직무, 기업, 산업을 각각 하나씩 선택해 주세요.</p>
               <div style={{ marginTop: '12px', display: 'grid', gap: '12px' }}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {JOB_FIELDS.map((value) =>
@@ -227,25 +240,28 @@ export default function OnboardingPage() {
                     renderChip(value, value === targetCompany, setTargetCompany, 'company')
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {INDUSTRIES.map((value) =>
-                    renderChip(value, value === industry, setIndustry, 'industry')
-                  )}
-                </div>
+                {/* 베타: 은행권 중심, 산업 선택 숨김 */}
+{false && (
+  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+    {INDUSTRIES.map((value) =>
+      renderChip(value, value === industry, setIndustry, 'industry')
+    )}
+  </div>
+  )}
               </div>
             </section>
 
             <section style={{ width: '20%', paddingRight: '8px' }}>
-              <h2 style={{ ...titleStyle, fontSize: '20px', fontWeight: 700 }}>
-                취업 목표 시기를 선택해 주세요
-              </h2>
-              <p style={{ ...bodyStyle, marginTop: '10px' }}>가장 가까운 목표 시점을 선택해 주세요.</p>
-              <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {TARGET_DATES.map((value) =>
-                  renderChip(value, value === targetDate, setTargetDate)
-                )}
-              </div>
-            </section>
+  <h2 style={{ ...titleStyle, fontSize: '20px', fontWeight: 700 }}>
+    취업 목표 시기를 선택해 주세요
+  </h2>
+  <p style={{ ...bodyStyle, marginTop: '10px' }}>목표 월을 선택해 주세요.</p>
+  <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '200px', overflowY: 'auto' }}>
+    {TARGET_MONTHS.map(({ label, value }) =>
+      renderChip(label, value === targetDate, () => setTargetDate(value))
+    )}
+  </div>
+</section>
 
             <section style={{ width: '20%' }}>
               <h2 style={{ ...titleStyle, fontSize: '20px', fontWeight: 700 }}>알림 설정</h2>

@@ -31,8 +31,8 @@ export default function BottomNav({ onPrismClick }: { onPrismClick?: () => void 
           justifyContent: 'space-around',
           backgroundColor: '#ffffff',
           borderTop: '0.5px solid var(--border)',
-          paddingBottom: '20px',
           paddingTop: '10px',
+          paddingBottom: 'calc(10px + env(safe-area-inset-bottom))',
           zIndex: 50,
         }}
         className="bottom-nav"
@@ -42,10 +42,10 @@ export default function BottomNav({ onPrismClick }: { onPrismClick?: () => void 
           const active = isActive(tab.href)
           return (
             <Link
-              key={tab.href}
-              href={tab.href}
-              style={{ flex: 1, display: 'flex', justifyContent: 'center' }}
-            >
+  key={tab.href}
+  href={tab.href}
+  style={{ flex: 1, display: 'flex', justifyContent: 'center', textDecoration: 'none' }}
+>
               <button
                 style={{
                   display: 'flex',
@@ -90,10 +90,10 @@ export default function BottomNav({ onPrismClick }: { onPrismClick?: () => void 
           const active = isActive(tab.href)
           return (
             <Link
-              key={tab.href}
-              href={tab.href}
-              style={{ flex: 1, display: 'flex', justifyContent: 'center' }}
-            >
+  key={tab.href}
+  href={tab.href}
+  style={{ flex: 1, display: 'flex', justifyContent: 'center', textDecoration: 'none' }}
+>
               <button
                 style={{
                   display: 'flex',

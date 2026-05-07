@@ -6,8 +6,8 @@ export default function PrismModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
 
   const options = [
-    { type: 'warmup', icon: '✦', label: '인사이트 워밍업', desc: '오늘의 단어·개념을 내 것으로', bg: '#17171a' },
-    { type: 'issue',  icon: '📰', label: '세상 한 조각',    desc: '오늘의 이슈에 나의 생각 더하기', bg: '#0066ff' },
+    { type: 'card', icon: '✦', label: '인사이트 워밍업', desc: '오늘의 단어·개념을 내 것으로', bg: '#17171a' },
+    { type: 'opinion',  icon: '📰', label: '세상 한 조각',    desc: '오늘의 이슈에 나의 생각 더하기', bg: '#0066ff' },
     { type: 'self',   icon: '🪞', label: '자기이해 질문',   desc: '나를 만드는 질문에 답하기', bg: '#5040b0' },
   ];
 
@@ -40,7 +40,7 @@ export default function PrismModal({ onClose }: { onClose: () => void }) {
           {options.map((opt) => (
             <button
               key={opt.type}
-              onClick={() => { router.push(`/prism?type=${opt.type}`); onClose(); }}
+              onClick={() => { router.push(`/prism/write?type=${opt.type}`); onClose(); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
                 padding: '14px 16px', borderRadius: 14,
