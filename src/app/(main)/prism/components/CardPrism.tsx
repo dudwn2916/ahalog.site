@@ -59,9 +59,9 @@ export default function CardPrism({ onClose }: Props) {
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [userJob, setUserJob] = useState(USER.defaultJob)
-  const [userCompany, setUserCompany] = useState(USER.defaultCompany)
-  const [userIndustry, setUserIndustry] = useState(USER.defaultIndustry)
+  const [, setUserJob] = useState(USER.defaultJob)
+  const [, setUserCompany] = useState(USER.defaultCompany)
+  const [, setUserIndustry] = useState(USER.defaultIndustry)
   const [cards, setCards] = useState(CARDS)
   const [contentKeywords, setContentKeywords] = useState(KEYWORDS)
 

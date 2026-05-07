@@ -306,7 +306,15 @@ useEffect(() => {
     }
 
     // Supabase 데이터 → Prism 인터페이스로 변환
-    const mapped: Prism[] = data.map((p: any) => ({
+    const mapped: Prism[] = data.map((p: {
+      id: string
+      type: string
+      body: string
+      job_tags: string[]
+      company_tags: string[]
+      created_at: string
+      contents: { id: string; title: string; keywords: string[] } | null
+    }) => ({
       id: p.id,
       type: p.type === 'opinion' ? 'opinion' : p.type === 'self' ? 'self' : 'card',
       title: p.contents?.title ?? '제목 없음',

@@ -18,7 +18,6 @@ import {
   Bell,
   Newspaper,   // ← 추가
   Search,
-  Clock,
   Layers,
 } from 'lucide-react'
 
@@ -31,11 +30,14 @@ interface Content {
   type: ContentType
   title: string
   tags: string[]
-  category?: string   // question 전용
-  source?: string     // article 전용
+  keywords?: string[]      // ← Supabase 컬럼명
+  category?: string
+  source?: string
   date: string
+  published_at?: string    // ← Supabase 컬럼명
   hasPrism: boolean
   excerpt: string
+  body?: string            // ← Supabase 컬럼명
 }
 
 const DUMMY_CONTENTS: Content[] = [
@@ -230,11 +232,11 @@ useEffect(() => {
           .eq('type', prismType)
           .not('content_id', 'is', null) // content_id 없는 직접 작성 제외
 
-        prismSet = new Set((myPrisms ?? []).map((p: any) => p.content_id))
+        prismSet = new Set((myPrisms ?? []).map((p: { content_id: string }) => p.content_id))
       }
 
       // Supabase 데이터 → Content 인터페이스로 변환
-      const merged: Content[] = rawContents.map((c: any) => ({
+      const merged: Content[] = rawContents.map((c: Content) => ({
         id: c.id,
         type: c.type,
         title: c.title,
@@ -255,7 +257,8 @@ useEffect(() => {
   }
 
   load()
-}, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps — activeTab 변경 시 재조회
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activeTab])
 
 
 
@@ -274,7 +277,7 @@ useEffect(() => {
                                QUESTION_FILTERS
 
   // ── 필터 로직 ──
-  const filtered = DUMMY_CONTENTS.filter(item => {
+  const filtered = contents.filter(item => {
     if (item.type !== activeTab) return false
     if (activeFilter !== '전체' && !item.tags.includes(activeFilter)) return false
     if (searchQuery) {
