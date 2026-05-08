@@ -37,10 +37,12 @@ export default function LoginForm() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [message, setMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<AuthFormValues>({
     resolver: zodResolver(authFormSchema),
@@ -50,20 +52,46 @@ export default function LoginForm() {
   const onSubmit = handleSubmit(async ({ email, password }) => {
     setMessage(null)
     setSubmitting(true)
-
+  
     try {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.push('/home')
+  
+        const { data: { user } } = await supabase.auth.getUser()
+        const { data: profile } = await supabase
+          .from('users')
+          .select('nickname')
+          .eq('id', user!.id)
+          .maybeSingle()
+  
+          if (!profile || !profile.nickname || profile.nickname.trim() === '') {
+            router.push('/onboarding')
+          } else {
+            router.push('/home')
+          }
+          
         router.refresh()
         return
       }
-
+  
+      // 회원가입
+      if (password !== confirmPassword) {
+        setMessage('비밀번호가 일치하지 않아요.')
+        return
+      }
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) throw error
+  
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+      if (loginError) {
+        setMessage('회원가입 완료! 이메일로 로그인해 주세요.')
+        setMode('login')
+        return
+      }
       router.push('/onboarding')
       router.refresh()
+  
     } catch (error) {
       const nextMessage =
         error instanceof Error ? error.message : '인증 처리 중 오류가 발생했습니다.'
@@ -141,9 +169,26 @@ export default function LoginForm() {
           </span>
         )}
 
+        {mode === 'signup' && (
+          <>
+            <input
+              type="password"
+              placeholder="비밀번호 확인"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              style={inputStyle}
+            />
+            {confirmPassword.length > 0 && confirmPassword !== watch('password') && (
+              <span style={{ color: 'var(--danger)', fontSize: '12px' }}>
+                비밀번호가 일치하지 않아요.
+              </span>
+            )}
+          </>
+        )}
+
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || (mode === 'signup' && watch('password') !== confirmPassword)}
           style={{
             ...buttonStyle,
             marginTop: '4px',
@@ -171,7 +216,7 @@ export default function LoginForm() {
           gap: '8px',
         }}
       >
-        <span style={{ fontSize: '14px', fontWeight: 800 }}>G</span>
+        <img src="/google-logo.svg" width={18} height={18} alt="Google" />
         Google로 계속하기
       </button>
 

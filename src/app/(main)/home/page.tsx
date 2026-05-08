@@ -1,10 +1,11 @@
 'use client';
 
 import BottomNav from '@/components/ui/BottomNav';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PrismModal from '@/components/ui/PrismModal';
+import { createClient } from '@/lib/supabase/client';
 
 // ────────────────────────────────────────────────
 // 타입
@@ -117,21 +118,21 @@ function TabContent({ tab, onPrism }: { tab: Tab; onPrism: (type: string) => voi
 
   const HEADERS: Record<Tab, React.ReactNode> = {
     '인사이트 워밍업': (
-      <div style={{ background: '#17171a', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '14px 14px 0 0' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.9)', borderRadius: 100, padding: '3px 8px' }}>인사이트 워밍업</span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>오늘의 단어</span>
+      <div style={{ background: 'linear-gradient(135deg,#ffe8cc,#ffd4a0)', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '14px 14px 0 0' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,.15)', color: '#5a3000', borderRadius: 100, padding: '3px 8px' }}>인사이트 워밍업</span>
+        <span style={{ fontSize: 11, color: '#5a3000' }}>오늘의 상식</span>
       </div>
     ),
     '세상 한 조각': (
-      <div style={{ background: '#0a3a6e', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '14px 14px 0 0' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.9)', borderRadius: 100, padding: '3px 8px' }}>세상 한 조각</span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>오늘의 이슈</span>
+      <div style={{ background: 'linear-gradient(135deg,#c8f0d8,#a8e4be)', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '14px 14px 0 0' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,.15)', color: '#0f4a28', borderRadius: 100, padding: '3px 8px' }}>세상 한 조각</span>
+        <span style={{ fontSize: 11, color: '#0f4a28' }}>오늘의 이슈</span>
       </div>
     ),
     '나를 만드는 질문': (
-      <div style={{ background: 'linear-gradient(135deg,#2d1a4a,#1a2d4a)', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '14px 14px 0 0' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.9)', borderRadius: 100, padding: '3px 8px' }}>나를 만드는 질문</span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>자기이해</span>
+      <div style={{ background: 'linear-gradient(135deg,#c8deff,#a8c8f8)', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '14px 14px 0 0' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,.15)', color: '#003580', borderRadius: 100, padding: '3px 8px' }}>나를 만드는 질문</span>
+        <span style={{ fontSize: 11, color: '#003580' }}>자기 이해</span>
       </div>
     ),
   };
@@ -193,13 +194,139 @@ function TabContent({ tab, onPrism }: { tab: Tab; onPrism: (type: string) => voi
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<Tab>('인사이트 워밍업');
   const [showPrismModal, setShowPrismModal] = useState(false);
+  const [todayRoutine, setTodayRoutine] = useState<string[]>([])
+  const [completedTypes, setCompletedTypes] = useState<string[]>([])
+  const [pastContents, setPastContents] = useState<{
+    id: string; date: string; tag: string; title: string; hasPrism: boolean; prismId?: string
+  }[]>([])
+  const [recentPrisms, setRecentPrisms] = useState<{
+    id: string; date: string; tag: string; title: string; topic: string
+  }[]>([])
+
   const router = useRouter();
+  const supabase = createClient()
+  const [contentIds, setContentIds] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    async function loadContentIds() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const today = new Date().toISOString().slice(0, 10)
+      const [{ data: userData }, { data: cardContents }, { data: selfContents }, { data: articleContents }] =
+        await Promise.all([
+          supabase.from('users').select('card_progress, self_progress').eq('id', user.id).single(),
+          supabase.from('contents').select('id').eq('type', 'card').order('published_at', { ascending: true }),
+          supabase.from('contents').select('id').eq('type', 'question').order('published_at', { ascending: true }),
+          supabase.from('contents').select('id').eq('type', 'article').lte('published_at', today).order('published_at', { ascending: false }),
+        ])
+      if (!userData) return
+      const map: Record<string, string> = {}
+      if (cardContents?.length) map['card'] = cardContents[(userData.card_progress ?? 0) % cardContents.length].id
+      if (selfContents?.length) map['self'] = selfContents[(userData.self_progress ?? 0) % selfContents.length].id
+      if (articleContents?.length) map['opinion'] = articleContents[0].id
+      setContentIds(map)
+
+      // 오늘 요일 (mon~sun)
+      const dayKeys = ['sun','mon','tue','wed','thu','fri','sat']
+      const todayKey = dayKeys[new Date().getDay()]
+
+      // 유저 루틴 설정 불러오기
+      const { data: routineData } = await supabase
+        .from('users')
+        .select('routine')
+        .eq('id', user.id)
+        .single()
+
+      const routine = routineData?.routine
+      const todayConfig = routine?.[todayKey]
+      if (todayConfig?.enabled && todayConfig?.types?.length > 0) {
+        setTodayRoutine(todayConfig.types)
+      } else {
+        setTodayRoutine([])
+      }
+
+      // 오늘 작성한 프리즘 타입 목록
+      const todayStart = new Date().toISOString().slice(0, 10)
+      const { data: todayPrisms } = await supabase
+        .from('prisms')
+        .select('type')
+        .eq('user_id', user.id)
+        .gte('created_at', todayStart)
+
+      setCompletedTypes((todayPrisms ?? []).map((p: { type: string }) => p.type))
+    }
+    loadContentIds()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: contents } = await supabase
+        .from('contents')
+        .select('id, title, type, published_at')
+        .order('published_at', { ascending: false })
+
+      const { data: prisms } = await supabase
+        .from('prisms')
+        .select('content_id, id')
+        .eq('user_id', user.id)
+        .not('content_id', 'is', null)
+
+      const writtenMap = new Map((prisms ?? []).map((p: { content_id: string; id: string }) => [p.content_id, p.id]))
+      const tagMap: Record<string, string> = { card: '워밍업', article: '이슈', question: '자기이해' }
+
+      setPastContents(
+        (contents ?? []).slice(0, 2).map(c => ({
+          id: c.id,
+          date: c.published_at ? `${c.published_at.slice(5, 10).replace('-', '월 ')}일` : '',
+          tag: tagMap[c.type] ?? '워밍업',
+          title: c.title ?? '',
+          hasPrism: writtenMap.has(c.id),
+          prismId: writtenMap.get(c.id),
+        }))
+      )
+
+      const { data: recentData } = await supabase
+        .from('prisms')
+        .select('id, type, body, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(2)
+
+      const recentTagMap: Record<string, string> = { card: '카드뉴스', opinion: '기사', self: '자기이해' }
+      setRecentPrisms(
+        (recentData ?? []).map((p: { id: string; type: string; body: string | null; created_at: string }) => ({
+          id: p.id,
+          date: p.created_at ? `${p.created_at.slice(5, 10).replace('-', '월 ')}일` : '',
+          tag: recentTagMap[p.type] ?? '자기이해',
+          title: (p.body ?? '').slice(0, 30) || '기록',
+          topic: p.body ?? '',
+        }))
+      )
+    }
+    load()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dateStr = new Date().toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
   });
 
-  const goPrism = (type: string) => router.push(`/prism/write?type=${type}`);
+  const goPrism = (type: string) => {
+    const contentId = contentIds[type]
+    const routineTypesQuery = todayRoutine.join(',')
+    const completedTypesQuery = completedTypes.join(',')
+    const base = contentId
+      ? `/prism/write?type=${type}&contentId=${contentId}`
+      : `/prism/write?type=${type}`
+    router.push(`${base}&routineTypes=${routineTypesQuery}&completedTypes=${completedTypesQuery}`)
+  };
+  const ROUTINE_ITEMS = [
+    { type: 'card',    icon: '✦',  label: '워밍업' },
+    { type: 'opinion', icon: '📰', label: '이슈 읽기' },
+    { type: 'self',    icon: '🪞', label: '자기이해' },
+  ]
   const activeTabIndex = TABS.indexOf(activeTab);
   const goPrevTab = () => setActiveTab(TABS[(activeTabIndex - 1 + TABS.length) % TABS.length]);
   const goNextTab = () => setActiveTab(TABS[(activeTabIndex + 1) % TABS.length]);
@@ -271,52 +398,73 @@ export default function HomePage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>오늘의 루틴</h3>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--fg3)' }}>3개 중 1개 완료</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--fg3)' }}>
+                    {todayRoutine.length > 0
+                      ? `${todayRoutine.length}개 중 ${completedTypes.filter(t => todayRoutine.includes(t)).length}개 완료`
+                      : '오늘 루틴 없음'}
+                  </p>
                 </div>
                 <div>
-                  <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--blue)' }}>1</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg4)' }}>/3</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--blue)' }}>
+                    {completedTypes.filter(t => todayRoutine.includes(t)).length}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg4)' }}>
+                    /{todayRoutine.length}
+                  </span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
-                {/* 워밍업 완료 */}
-                <div onClick={() => goPrism('card')} style={{
-                  flex: 1, background: 'linear-gradient(145deg,#f0f5ff,#e8eeff)',
-                  border: '1px solid #c7d8ff', borderRadius: 12, padding: '14px 10px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  cursor: 'pointer', position: 'relative',
+              {todayRoutine.length === 0 ? (
+                <div style={{
+                  padding: '16px 0', textAlign: 'center',
+                  fontSize: 13, color: 'var(--fg4)', lineHeight: 1.6,
                 }}>
-                  <div style={{ fontSize: 18 }}>✦</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)' }}>워밍업</div>
-                  <div style={{
-                    position: 'absolute', top: 6, right: 6, width: 16, height: 16,
-                    background: 'var(--blue)', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 9, color: '#fff', fontWeight: 700,
-                  }}>✓</div>
+                  오늘은 루틴이 없는 날이에요 😊<br/>
+                  <span style={{ fontSize: 11 }}>루틴 설정에서 변경할 수 있어요</span>
                 </div>
-
-                {/* 기사 읽기 */}
-                <div onClick={() => goPrism('opinion')} style={{
-                  flex: 1, background: '#fff', border: '1px solid var(--border)',
-                  borderRadius: 12, padding: '14px 10px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer',
-                }}>
-                  <div style={{ fontSize: 18 }}>📰</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg3)' }}>이슈 읽기</div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {ROUTINE_ITEMS.map(item => {
+                    const isInRoutine = todayRoutine.includes(item.type)
+                    const isDone = completedTypes.includes(item.type)
+                    return (
+                      <div
+                        key={item.type}
+                        onClick={() => isInRoutine && goPrism(item.type)}
+                        style={{
+                          flex: 1,
+                          background: isDone
+                            ? 'linear-gradient(145deg,#f0f5ff,#e8eeff)'
+                            : isInRoutine ? '#fff' : '#f7f7f8',
+                          border: isDone
+                            ? '1px solid #c7d8ff'
+                            : isInRoutine ? '1px solid var(--border)' : '1px solid #ececec',
+                          borderRadius: 12, padding: '14px 10px',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                          cursor: isInRoutine ? 'pointer' : 'default',
+                          position: 'relative',
+                          opacity: isInRoutine ? 1 : 0.4,
+                        }}
+                      >
+                        <div style={{ fontSize: 18 }}>{item.icon}</div>
+                        <div style={{
+                          fontSize: 11, fontWeight: 600,
+                          color: isInRoutine ? 'var(--ink)' : 'var(--fg4)',
+                        }}>{item.label}</div>
+                        {isDone && (
+                          <div style={{
+                            position: 'absolute', top: 6, right: 6,
+                            width: 16, height: 16, background: 'var(--blue)',
+                            borderRadius: '50%', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9, color: '#fff', fontWeight: 700,
+                          }}>✓</div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-
-                {/* 자기이해 */}
-                <div onClick={() => goPrism('self')} style={{
-                  flex: 1, background: '#fff', border: '1px solid var(--border)',
-                  borderRadius: 12, padding: '14px 10px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer',
-                }}>
-                  <div style={{ fontSize: 18 }}>🪞</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg3)' }}>자기이해</div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* 스트릭 → 성장기록 */}
@@ -447,19 +595,25 @@ export default function HomePage() {
                 <Link href="/library" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>전체 보기</Link>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { id: 'nim-2025-05-03',            date: '5월 3일', tag: '워밍업', title: '순이자마진 (NIM) — 은행 수익성 핵심 지표' },
-                  { id: 'digital-finance-2025-05-02', date: '5월 2일', tag: '이슈',   title: '디지털 금융 가속화 — 비대면 채널 60% 돌파' },
-                ].map((item) => (
-                  <Link key={item.id} href={`/library/${item.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <span style={{ fontSize: 11, color: 'var(--fg4)' }}>{item.date}</span>
-                        <Tag label={item.tag} />
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
+                {pastContents.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      if (item.hasPrism && item.prismId) {
+                        router.push(`/archive/${item.prismId}`)
+                      } else {
+                        const typeMap: Record<string, string> = { 워밍업: 'card', 이슈: 'opinion', 자기이해: 'self' }
+                        router.push(`/prism/write?type=${typeMap[item.tag] ?? 'card'}&contentId=${item.id}`)
+                      }
+                    }}
+                    style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: 'var(--fg4)' }}>{item.date}</span>
+                      <Tag label={item.tag} />
                     </div>
-                  </Link>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -471,20 +625,19 @@ export default function HomePage() {
                 <Link href="/archive" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>전체 보기</Link>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { id: 'prism-2025-05-02-money', date: '5월 2일', tag: '기사',    title: '"고객이 이동하는 시점이 새로운 관계의 시작이다."', topic: '머니무브 가속화' },
-                  { id: 'prism-2025-05-01-self',  date: '5월 1일', tag: '자기이해', title: '"고객 신뢰 구축이 내가 가장 잘할 수 있는 역량이다."', topic: '나를 만드는 질문' },
-                ].map((item) => (
-                  <Link key={item.id} href={`/archive/${item.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <span style={{ fontSize: 11, color: 'var(--fg4)' }}>{item.date}</span>
-                        <Tag label={item.tag} />
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--fg4)', marginTop: 4 }}>{item.topic}</div>
+                {recentPrisms.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => router.push(`/archive/${item.id}`)}
+                    style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: 'var(--fg4)' }}>{item.date}</span>
+                      <Tag label={item.tag} />
                     </div>
-                  </Link>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--fg4)', marginTop: 4 }}>{item.topic}</div>
+                  </div>
                 ))}
               </div>
             </div>

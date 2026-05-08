@@ -36,6 +36,7 @@ interface Content {
   date: string | undefined
   published_at?: string    // ← Supabase 컬럼명
   hasPrism: boolean
+  prismId?: string 
   excerpt: string
   body?: string            // ← Supabase 컬럼명
 }
@@ -48,10 +49,6 @@ const DUMMY_CONTENTS: Content[] = [
   { id: 'q1', type: 'question', title: '내가 은행원이 되고 싶은 진짜 이유는?', tags: ['이유탐색'],                      date: '2025-05-06', hasPrism: true,  excerpt: '직업 선택의 가장 근본적인 이유를 탐색해 봅니다.' },
   { id: 'q2', type: 'question', title: '나는 어떤 고객에게 가장 도움이 되는 금융인인가요?', tags: ['강점'],            date: '2025-05-05', hasPrism: false, excerpt: '내가 가장 잘 도울 수 있는 고객의 모습을 구체적으로 그려봅니다.' },
 ]
-
-const CARD_FILTERS     = ['전체', '디지털전환', '금리', '핀테크', '자산관리', 'ESG']
-const ARTICLE_FILTERS  = ['전체', '핀테크', '금리', '여신', 'ESG', '정책']
-const QUESTION_FILTERS = ['전체', '가치관', '직업관', '강점', '경험', '이유탐색']
 
 // ─── 서브컴포넌트 ────────────────────────────────────────────────────────────
 
@@ -149,28 +146,6 @@ function ContentCard({ item, onClick }: { item: Content; onClick: () => void }) 
   )
 }
 
-// ─── 탭/필터 선택 버튼 ────────────────────────────────────────────────────────
-
-function FilterChip({
-  label, active, onClick,
-}: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: active ? 700 : 400,
-        border: active ? '1.5px solid #0066ff' : '1.5px solid #e4e4e4',
-        background: active ? '#eef3ff' : '#fff',
-        color: active ? '#0066ff' : '#555',
-        cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
-      }}
-    >
-      {label}
-    </button>
-  )
-}
-
 // ─── 메인 페이지 ─────────────────────────────────────────────────────────────
 
 export default function LibraryPage() {
@@ -181,11 +156,9 @@ export default function LibraryPage() {
    // 탭 (전체 없음, card로 시작)
    const [activeTab, setActiveTab] = useState<ContentType>('card')
 
-   // 키워드 필터
-   const [activeFilter, setActiveFilter] = useState('전체')
- 
    // 검색
    const [searchQuery, setSearchQuery] = useState('')
+   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
  
    const [showPrismModal, setShowPrismModal] = useState(false)
 
@@ -218,8 +191,8 @@ useEffect(() => {
 
       // 내가 완료한 prisms 조회 (content_id 기준)
       // library 탭 → prisms 타입 매핑: card→card, article→opinion, question→self
-      let prismSet = new Set<string>()
-      if (user) {
+      let prismMap = new Map<string, string>() // contentId → prismId
+if (user) {
         const prismType =
           activeTab === 'card'     ? 'card' :
           activeTab === 'article'  ? 'opinion' :
@@ -227,13 +200,17 @@ useEffect(() => {
 
         const { data: myPrisms } = await supabase
           .from('prisms')
-          .select('content_id')
+          .select('id, content_id')   // id 추가
           .eq('user_id', user.id)
           .eq('type', prismType)
           .not('content_id', 'is', null) // content_id 없는 직접 작성 제외
 
-        prismSet = new Set((myPrisms ?? []).map((p: { content_id: string }) => p.content_id))
-      }
+          prismMap = new Map(
+            (myPrisms ?? [])
+              .filter((p: { id: string; content_id: string }) => p.content_id)
+              .map((p: { id: string; content_id: string }) => [p.content_id, p.id])
+          )
+        }
 
       // Supabase 데이터 → Content 인터페이스로 변환
       const merged: Content[] = rawContents.map((c: Content) => ({
@@ -243,7 +220,8 @@ useEffect(() => {
         tags: c.keywords ?? [],
         source: c.source,
         date: c.published_at ?? '',
-        hasPrism: prismSet.has(c.id), // 내가 이 콘텐츠로 프리즘 작성했는지
+        hasPrism: prismMap.has(c.id),
+        prismId: prismMap.get(c.id),   // ← 이 줄만 추가, prismSet → prismMap 변경
         excerpt: c.body ?? '',
       }))
 
@@ -266,20 +244,12 @@ useEffect(() => {
   // 탭 변경 시 필터 초기화
   function handleTabChange(tab: ContentType) {
     setActiveTab(tab)
-    setActiveFilter('전체')
     setSearchQuery('')
   }
-
-  // 현재 탭에 맞는 필터 목록
-  const filters =
-    activeTab === 'card'     ? CARD_FILTERS :
-    activeTab === 'article'  ? ARTICLE_FILTERS :
-                               QUESTION_FILTERS
 
   // ── 필터 로직 ──
   const filtered = contents.filter(item => {
     if (item.type !== activeTab) return false
-    if (activeFilter !== '전체' && !item.tags.includes(activeFilter)) return false
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       if (
@@ -290,6 +260,12 @@ useEffect(() => {
     }
     return true
   })
+
+  const sortedFiltered = [...filtered].sort((a, b) =>
+    sortOrder === 'desc'
+      ? (b.date ?? '').localeCompare(a.date ?? '')
+      : (a.date ?? '').localeCompare(b.date ?? '')
+  )
 
   return (
     <div style={{
@@ -493,18 +469,21 @@ useEffect(() => {
             })}
           </div>
 
-          {/* 키워드 필터 칩 */}
-          <div style={{
-            display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '14px',
-            scrollbarWidth: 'none',
-          }}>
-            {filters.map(f => (
-              <FilterChip
-                key={f} label={f}
-                active={activeFilter === f}
-                onClick={() => setActiveFilter(f)}
-              />
-            ))}
+          <div style={{ display: 'flex', gap: 4, paddingBottom: 12, alignItems: 'center' }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+              {([
+                { key: 'desc', label: '최신순' },
+                { key: 'asc', label: '오래된순' },
+              ] as const).map(s => (
+                <button key={s.key} type="button" onClick={() => setSortOrder(s.key)} style={{
+                  padding: '7px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: sortOrder === s.key ? '#0a0a0a' : '#fff',
+                  color: sortOrder === s.key ? '#fff' : '#555',
+                  fontSize: 12, fontWeight: sortOrder === s.key ? 700 : 400,
+                  boxShadow: '0 0 0 1px #e4e4e4',
+                }}>{s.label}</button>
+              ))}
+            </div>
           </div>
 
           </div>
@@ -531,15 +510,17 @@ useEffect(() => {
 
   ) : (
     /* 카드 목록 */
-    filtered.map(item => (
+    sortedFiltered.map(item => (
       <ContentCard
         key={item.id}
         item={item}
         onClick={() => {
           const typeMap = { card: 'card', article: 'opinion', question: 'self' }
-          // TODO: 개별 기록 페이지(/prism/[id]) 구현 후 hasPrism true일 때 연결
-          // if (item.hasPrism) { router.push(`/prism/${item.id}`) }
-          router.push(`/prism/write?type=${typeMap[item.type]}&contentId=${item.id}`)
+          if (item.hasPrism && item.prismId) {
+            router.push(`/archive/${item.prismId}`)
+          } else {
+            router.push(`/prism/write?type=${typeMap[item.type]}&contentId=${item.id}`)
+          }
         }}
       />
     ))
